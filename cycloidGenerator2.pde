@@ -6,17 +6,6 @@
 // and special thanks to http://paulbourke.net/dataformats/dxf/min3d.html
 //------------------------------------------
 
-class Point2D {
-  public float x, y;
-
-  public Point2D() {
-  }
-  public Point2D(float x0, float y0) {
-    x=x0;
-    y=y0;
-  }
-}
-
 
 Point2D getPoint(float t, float R, float Rr, float E, float N) {
   //psi = -atan(sin((1 - N) * theta) / ((R / (E * N)) - cos((1 - N) * theta)))
@@ -38,13 +27,14 @@ float getDist(float xa, float ya, float xb, float yb) {
 
 
 //####   CHANGE THE VALUES BELOW FOR DIMENSIONS #####
-float R = 300; //rotor radius (mm)
-float N = 50; //number of rollers
+float R = (88.9-6.0)/2; //rotor radius (mm)
+float N = 43; //number of rollers
 
-float OutputPinRadius = 30; //mm
-float OutputPinOrbitRadius = 200;  //mm
-float No = 8;  // number of output pins
-float EccentricCamRadius = 150;  // Eccentric Cam radius (mm)
+float EccentricCamRadius = 20;  // Eccentric Cam radius (mm)
+
+float OutputPinCount = 8;  // number of output pins
+float OutputPinRadius = 3; //mm
+float OutputPinOrbitRadius = (R+EccentricCamRadius)/2;  //mm
 
 int circleQuality=36;  // >3.  whole number.  bigger number, more refinement on circles.
   
@@ -72,7 +62,8 @@ void setup() {
   scale(60);
   //strokeWeight(0.05);
 
-  //println("Ratio will be " + (1/N) + ".");
+  println("Ratio will be " + (1/N));
+  println("roller pin radius="+Rr);
 }
 
 
@@ -90,11 +81,11 @@ void keyReleased() {
   switch(key) {
   case '1':     N++;    break;
   case '2':     N--;    break;
-  case '3':     No++;   break;
-  case '4':     No--;   break;
+  case '3':     OutputPinCount++;   break;
+  case '4':     OutputPinCount--;   break;
   default:     break;
   }
-  println("N="+N+" No="+No);
+  println("N="+N+" OutputPinCount="+OutputPinCount);
   pictureExpired=true;
 }
 
@@ -211,6 +202,7 @@ void finishFile(PrintWriter f) {
 void drawEverything() {
   background(0);
   translate(width/2, height/2);
+  scale(8);
   noFill();
 
   updateGearParameters();
@@ -294,7 +286,7 @@ void drawCircle(float cx,float cy,float r,PrintWriter pw) {
 }
 
 void drawGear(float translateXmm,float rotateRad,PrintWriter pw) {
-  drawCircle(translateXmm,0,EccentricCamRadius/2,pw);
+  drawCircle(translateXmm,0,EccentricCamRadius,pw);
   drawRotorOutputGuides(translateXmm,pw);
   
   pw.print("0\nLWPOLYLINE\n"+
@@ -319,9 +311,9 @@ void drawGear(float translateXmm,float rotateRad,PrintWriter pw) {
 
 
 void drawRotorOutputGuides(float translateXmm,PrintWriter pw) {
-  for (float i=0; i<No; ++i) {
-    float cx=cos(i*(PI*2/No))*OutputPinOrbitRadius+translateXmm;
-    float cy=sin(i*(PI*2/No))*OutputPinOrbitRadius;
+  for (float i=0; i<OutputPinCount; ++i) {
+    float cx=cos(i*(PI*2/OutputPinCount))*OutputPinOrbitRadius+translateXmm;
+    float cy=sin(i*(PI*2/OutputPinCount))*OutputPinOrbitRadius;
     drawCircle(cx,cy,OutputPinRadius+Rr/2,pw);
   }
   //drawDottedCircle(OutputPinOrbitRadius);
@@ -329,7 +321,7 @@ void drawRotorOutputGuides(float translateXmm,PrintWriter pw) {
 
 
 void drawOutputPins() {
-  for (float i=0; i<PI*2; i+=(PI*2/No)) {
+  for (float i=0; i<PI*2; i+=(PI*2/OutputPinCount)) {
     float cx=cos(i)*OutputPinOrbitRadius;
     float cy=sin(i)*OutputPinOrbitRadius;
     drawCircle(cx,cy,OutputPinRadius,fGreen);
